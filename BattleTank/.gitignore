@@ -73,3 +73,6 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Omit the huge texture files for StarterContent
+Content/StarterContent/Textures/*
