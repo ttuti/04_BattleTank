@@ -2,15 +2,13 @@
 
 #include "TankAIController.h"
 #include "BattleTank.h"
+#include "Engine/World.h"
 
 void ATankAIController::BeginPlay() {
 	Super::BeginPlay();
 	auto PlayerTank = GetPlayerTank();
 	if (!PlayerTank) {
 		UE_LOG(LogTemp, Error, TEXT("AI controller can't find player tank"));
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("AIController found player: %s"), *(PlayerTank->GetName()));
 	}
 }
 
@@ -24,6 +22,15 @@ ATank* ATankAIController::GetPlayerTank() const {
 	return Cast<ATank>(PlayerPawn);
 }
 
+void ATankAIController::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+	auto PlayerTank = GetPlayerTank();
+	if (PlayerTank) {
+		//TODO moves towards player
+		GetControlledTank()->AimAt(GetPlayerTank()->GetActorLocation());
+		//TODO fire if ready
+	}	
+}
 
 
 

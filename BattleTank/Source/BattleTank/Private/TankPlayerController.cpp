@@ -2,6 +2,7 @@
 
 #include "TankPlayerController.h"
 #include "BattleTank.h"
+#include "Engine/World.h"
 
 ATank* ATankPlayerController::GetControlledTank() const {
 	return Cast<ATank>(GetPawn());
@@ -27,8 +28,8 @@ void ATankPlayerController::AimTowardsCrosshair() {
 
 	FVector HitLocation; //OUT parameter, doesn't need initialisation
 	if (GetSightRayHitLocation(HitLocation)) { //Has side-effect: its going to line trace
-		//UE_LOG(LogTemp, Warning, TEXT("HitLocation %s: "), *HitLocation.ToString());
-		//TODO Tell controlled tank to aim at this point
+		UE_LOG(LogTemp, Warning, TEXT("Hit location %s: "), *HitLocation.ToString());
+		GetControlledTank()->AimAt(HitLocation);
 	}
 	
 }
@@ -44,11 +45,11 @@ bool ATankPlayerController::GetSightRayHitLocation(FVector &HitLocation) const {
 	//De-project the screen position of the crosshair to a world direction
 	FVector LookDirection;
 	if (GetLookLocation(ScreenLocation, LookDirection)) {
-		UE_LOG(LogTemp, Warning, TEXT("Look direction %s: "), *LookDirection.ToString());
+		//Line-trace along that direction, and see what we hit.
+		GetLookVectorHitLocation(LookDirection, HitLocation);
+		return true;
 	}
-
-	//Line-trace along that direction, and see what we hit.
-	return true;
+	return false;
 }
 
 bool ATankPlayerController::GetLookLocation(FVector2D ScreenLocation, FVector &LookDirection) const {
@@ -59,3 +60,22 @@ bool ATankPlayerController::GetLookLocation(FVector2D ScreenLocation, FVector &L
 		CameraWorldLocation, 
 		LookDirection);
 }
+
+bool ATankPlayerController::GetLookVectorHitLocation(FVector LookDirection, FVector &HitLocation) const {
+	FHitResult HitResult;
+	auto StartLocation = PlayerCameraManager->GetCameraLocation();
+	auto EndLocation = StartLocation + (LookDirection * LineTraceRange);
+
+	if (GetWorld()->LineTraceSingleByChannel(
+			OUT HitResult,
+			StartLocation,
+			EndLocation,
+			ECollisionChannel::ECC_Visibility)
+		){ //line trace succeeds
+		HitLocation=HitResult.Location;
+		return true;
+	}
+	HitLocation = FVector(0.f);
+	return false;
+}
+
